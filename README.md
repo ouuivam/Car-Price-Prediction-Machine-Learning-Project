@@ -1,4 +1,4 @@
-                                                    Price Estimation for Cars In Moroccan 
+                               Price Estimation for Cars In Moroccan
 <img width="1421" height="903" alt="image" src="https://github.com/user-attachments/assets/8d866bb2-4ae0-4325-89c0-81bf19d4ee1c" />
 
 This Streamlit project provides an estimated price for cars in Morocco, displayed in Moroccan Dirhams (MAD).
