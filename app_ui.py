@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import joblib
+import base64
+
 
 # Charger les objets nécessaires
 mean_encoded = joblib.load("mean_encoded_dict.joblib")
@@ -878,33 +880,141 @@ marques_modeles = {
     ]
 
 }
+import streamlit as st
+import base64
 
-st.title("Estimation du prix d'une voiture d'occasion")
+# 🔹 Fonction pour convertir une image locale en base64
+def get_base64_image(image_path):
+    with open(image_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
-# Champs utilisateur
-kilometrage = st.number_input("Kilométrage", min_value=0)
-annee = st.number_input("Année", min_value=1990, max_value=2025, step=1)
-boite_vitesses = st.selectbox("Boîte de vitesses", [0, 1], format_func=lambda x: "Manuelle" if x == 0 else "Automatique")
-carburant = st.selectbox("Carburant", [0, 1], format_func=lambda x: "Essence" if x == 0 else "Diesel")
-puissance_fiscale = st.number_input("Puissance fiscale", min_value=1)
-nombre_portes = st.selectbox("Nombre de portes", [3, 4, 5])
-premiere_main = st.selectbox("Première main", [0, 1], format_func=lambda x: "Non" if x == 0 else "Oui")
-importe_neuf = st.selectbox("Importé neuf", [0, 1], format_func=lambda x: "Non" if x == 0 else "Oui")
+# 🔹 Chemin de ton image locale
+image_path = r"shiny-sports-car-speeds-along-wet-asphalt-generated-by-ai.jpg"
 
-# 🔁 Nouveau champ : Année de dédouanement
+# 🔹 Convertir l'image en base64
+image_base64 = get_base64_image(image_path)
+
+# 🔹 Ajouter le CSS pour le background
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{image_base64}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Titre centré et grand
+st.markdown(
+    """
+    <style>
+    /* Enlever le header et le footer de Streamlit */
+    header, footer {visibility: hidden;}
+    
+    /* Étendre l'app sur toute la page */
+    .stApp {
+        margin-top: 0px;
+        padding-top: 0px;
+    }
+    </style>
+
+    <h1 style='text-align: center; font-size: 60px;color: white;'>
+        Estimation du prix d'une voiture d'occasion
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
+
+
+
+
+
+st.markdown("""
+<style>
+/* Titre principal centré et blanc */
+h1 {
+    color: white;
+    text-align: center;
+    font-size: 60px;
+}
+
+/* Labels des inputs en blanc */
+label, .stTextInput>label, .stNumberInput>label, .stSelectbox>label {
+    color: white !important;
+    font-weight: bold;
+}
+
+
+
+
+/* Optionnel : enlever header/footer */
+header, footer {visibility: hidden;}
+.stApp {margin-top: 0px; padding-top: 0px;}
+</style>
+""", unsafe_allow_html=True)
+
+
+# =========================
+# Création de deux colonnes
+col1, col2 = st.columns(2)
+
+# ======= Colonne de gauche =======
+with col1:
+    kilometrage = st.number_input("Kilométrage", min_value=0)
+    boite_vitesses = st.selectbox("Boîte de vitesses", [0, 1], format_func=lambda x: "Manuelle" if x == 0 else "Automatique")
+    puissance_fiscale = st.number_input("Puissance fiscale", min_value=1)
+    premiere_main = st.selectbox("Première main", [0, 1], format_func=lambda x: "Non" if x == 0 else "Oui")
+    marque_choisie = st.selectbox("Marque", sorted(marques_modeles.keys()))
+    
+# ======= Colonne de droite =======
+with col2:
+    annee = st.number_input("Année", min_value=1990, max_value=2025, step=1)
+    carburant = st.selectbox("Carburant", [0, 1], format_func=lambda x: "Essence" if x == 0 else "Diesel")
+    nombre_portes = st.selectbox("Nombre de portes", [3, 4, 5])
+    importe_neuf = st.selectbox("Importé neuf", [0, 1], format_func=lambda x: "Non" if x == 0 else "Oui")
+    modeles = marques_modeles.get(marque_choisie, [])
+    modele_choisi = st.selectbox("Modèle", sorted(modeles))
+
+# Année de dédouanement en dessous des colonnes
 vehicule_dedouane = st.number_input("Année de dédouanement", min_value=0, max_value=2025, step=1)
 
-# ✅ Champs dépendants : Marque et Modèle
-marques = sorted(marques_modeles.keys())
-marque_choisie = st.selectbox("Marque", marques)
-modeles = marques_modeles.get(marque_choisie, [])
-modele_choisi = st.selectbox("Modèle", sorted(modeles))
+# =========================
+# Concaténer Marque et Modèle pour l'encodage
+Marque_et_Modele = f"{marque_choisie} {modele_choisi}".strip()
+marque_enc = mean_encoded.get(Marque_et_Modele, global_mean) if Marque_et_Modele else global_mean
 
-# Concaténer pour l'encodage et la prédiction
-Marque_et_Modèle = f"{marque_choisie} {modele_choisi}".strip()
-marque_enc = mean_encoded.get(Marque_et_Modèle, global_mean) if Marque_et_Modèle else global_mean
+# =========================
+# 💥 CSS pour customiser le bouton
+st.markdown("""
+<style>
+div.stButton > button {
+    display: block;
+    margin: 0 auto !important;       /* Centrer le bouton */
+    padding: 15px 150px !important; /* Taille plus grande */
+    font-size: 30px !important;     /* Texte plus grand */
+    background-color: white !important;  /* Couleur de fond initiale */
+    color: black !important;             /* Couleur du texte initiale */
+    border-radius: 10px !important;     /* Coins arrondis */
+    border: none !important;
+    transition: all 0.3s ease !important; /* Transition douce */
+}
 
-# Prédiction
+/* Effet au survol */
+div.stButton > button:hover {
+    background-color: white!important;  /* Fond devient blanc */
+    color: #E05322!important;             /* Texte devient noir */
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# 🔘 Bouton pour prédiction
 if st.button("Estimer le prix"):
     data = {
         "kilometrage": kilometrage,
@@ -914,9 +1024,9 @@ if st.button("Estimer le prix"):
         "puissance_fiscale": puissance_fiscale,
         "nombre_portes": nombre_portes,
         "premiere_main": premiere_main,
-        "vehicule_dedouane": vehicule_dedouane,  # ✅ une année maintenant
+        "vehicule_dedouane": vehicule_dedouane,
         "importe_neuf": importe_neuf,
-        "Marque_et_Modèle": Marque_et_Modèle
+        "Marque_et_Modèle": Marque_et_Modele
     }
 
     try:
@@ -924,8 +1034,43 @@ if st.button("Estimer le prix"):
         if response.status_code == 200:
             resultat = response.json()
             prix_estime = round(resultat['prix_estime'], 2)
-            st.success(f"💰 Prix estimé : {prix_estime} MAD")
+
+            # Affichage dans une "fenêtre" 
+            st.markdown(f"""
+            <div style="
+                background-color: rgba(0,0, 0,0.3);  
+                color: #F56C3B;
+                padding: 20px 20px;
+                border-radius: 15px;
+                text-align: center;
+                font-size: 40px;
+                width: 600px;
+                margin: 20px auto;
+                box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+            ">
+                  {prix_estime} MAD
+            </div>
+            """, unsafe_allow_html=True)
+
         else:
             st.error(f"Erreur de l'API : {response.status_code}\n{response.text}")
     except Exception as e:
         st.error(f"Erreur lors de la connexion à l'API : {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
